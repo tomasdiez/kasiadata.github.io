@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasia Financial Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .btn-active { background-color: #1d4ed8; color: white; }
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3498db; width: 40px; height: 40px; animation: spin 2s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <!-- Header -->
+            <div class="flex flex-wrap justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Kasia Financial Dashboard</h1>
+                    <p class="text-gray-500">Interactive view of monthly finances.</p>
+                </div>
+                <!-- Currency Toggle Buttons -->
+                <div class="flex items-center space-x-2 mt-4 sm:mt-0">
+                    <button id="btn-idr" class="px-4 py-2 text-sm font-medium rounded-md transition btn-active">IDR</button>
+                    <button id="btn-usd" class="px-4 py-2 text-sm font-medium rounded-md transition bg-gray-200 text-gray-700 hover:bg-gray-300">USD</button>
+                </div>
+            </div>
+            
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Hotel Income per Month Chart</h2>
+                    <canvas id="incomeChart"></canvas>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Hotel Expense Breakdown Chart</h2>
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Cafe Chart Section -->
+            <div class="mb-12">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Cafe & Co-working 2025 Chart</h2>
+                <canvas id="cafeChart"></canvas>
+            </div>
+
+
+            <!-- Data Tables Section -->
+            <div class="space-y-12 mb-8">
+                <!-- Income Table -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Hotel Income Data</h2>
+                    <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Income</th></tr></thead><tbody id="incomeTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+                </div>
+
+                <!-- Expense Table -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Hotel Expense Data</h2>
+                    <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salaries</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilities</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Various</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marketing</th></tr></thead><tbody id="expenseTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+                </div>
+
+                 <!-- Yearly Balance Table -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Hotel Yearly Balance Summary</h2>
+                    <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Balance</th></tr></thead><tbody id="balanceTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+                </div>
+
+                <!-- Cafe & Co-working Table -->
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Cafe & Co-working 2025</h2>
+                    <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Income</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expense</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th></tr></thead><tbody id="cafeTableBody" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+                </div>
+            </div>
+            
+            <!-- Summary Section -->
+            <div class="pt-8 border-t border-gray-200 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Total Summary (All Time)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div class="bg-green-100 p-6 rounded-lg"><h3 class="text-lg font-medium text-green-800">Total Hotel Income</h3><p id="totalIncomeValue" class="text-3xl font-bold text-green-900 mt-2"></p></div>
+                    <div class="bg-red-100 p-6 rounded-lg"><h3 class="text-lg font-medium text-red-800">Total Hotel Expenses</h3><p id="totalExpensesValue" class="text-3xl font-bold text-red-900 mt-2"></p></div>
+                    <div class="bg-blue-100 p-6 rounded-lg"><h3 class="text-lg font-medium text-blue-800">Total Hotel Balance</h3><p id="totalBalanceValue" class="text-3xl font-bold text-blue-900 mt-2"></p></div>
+                </div>
+            </div>
+
+            <!-- Gemini AI Analysis Section -->
+            <div class="pt-8 border-t border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">✨ AI-Powered Financial Analysis</h2>
+                <button id="generateReportBtn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition">Generate Financial Report</button>
+                <p class="text-xs text-gray-400 mt-2">Note: The AI analysis feature requires a live server environment and may not work in a downloaded HTML file due to API key security.</p>
+                <div id="reportContainer" class="mt-4 p-6 bg-gray-50 rounded-lg hidden"><div id="aiLoader" class="loader mx-auto hidden"></div><div id="reportContent" class="prose max-w-none"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL STATE & DATA (Manually Verified and Embedded from final Google Sheet) ---
+        let currentCurrency = 'IDR';
+        const idrToUsdRate = 0.000062;
+
+        const labels = ["2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05"];
+        const incomeData = [154145852, 108437601, 152853890, 139527101, 178990586, 148611258, 162435901, 186545432, 152018644, 150926697, 102712188, 153050396, 165818267, 107451823, 126773624, 131215262, 145894573];
+        const expenseCategories = {
+            Salaries:  [27820000, 18910000, 45950000, 26220000, 30140000, 32205000, 31305000, 30480000, 26300000, 30355000, 32215000, 32500000, 40735000, 37060000, 43675000, 38305000, 35330000],
+            Utilities: [14039454, 20949885, 20145983, 18720457, 17729773, 16868498, 17799853, 17924431, 17765578, 16561241, 20213611, 21723152, 17940751, 21183152, 19963036, 24783721, 21037427],
+            Various:   [10095000, 3290500, 41437000, 13969555, 5639000, 5514500, 7868400, 7524000, 8020000, 7912697, 5583000, 3549500, 19998852, 9211000, 8537000, 12492000, 21359500],
+            Marketing: [298436, 0, 0, 377597, 42500, 50605, 365902, 361042, 600603, 827800, 305000, 1424000, 0, 0, 770000, 0, 0]
+        };
+        const categoryColors = {
+            Salaries: 'rgba(54, 162, 235, 1)', Utilities: 'rgba(255, 99, 132, 1)',
+            Various: 'rgba(75, 192, 192, 1)', Marketing: 'rgba(255, 206, 86, 1)'
+        };
+        
+        // New Cafe Data from Screenshot
+        const cafeData = {
+            labels: ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05"],
+            income: [10873865, 8322482, 17660087, 33279420, 39062988],
+            expense: [10583796, 7682963, 16499608, 32186390, 40887512]
+        };
+        
+        let incomeChart, expenseChart, cafeChart;
+
+        // --- CORE FUNCTIONS ---
+        const formatCurrency = (value, currency) => new Intl.NumberFormat(currency === 'IDR' ? 'id-ID' : 'en-US', { style: 'currency', currency: currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
+        const getChartDatasets = (data, currency, type) => {
+            const rate = currency === 'USD' ? idrToUsdRate : 1;
+            if (type === 'income') {
+                return [{ label: 'Hotel Income', data: data.map(v => v * rate), borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', fill: true, tension: 0.1 }];
+            } else if (type === 'expense') {
+                return Object.keys(data).map(cat => ({ label: cat, data: data[cat].map(v => v * rate), borderColor: categoryColors[cat], fill: false, tension: 0.1 }));
+            } else if (type === 'cafe') {
+                 return [
+                    { label: 'Cafe Income', data: data.income.map(v => v * rate), backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+                    { label: 'Cafe Expense', data: data.expense.map(v => v * rate), backgroundColor: 'rgba(255, 99, 132, 0.7)' }
+                ];
+            }
+        };
+
+        const getCommonChartOptions = (currency) => ({
+            responsive: true,
+            plugins: { legend: { position: 'top' }, tooltip: { mode: 'index', intersect: false, callbacks: { label: (ctx) => `${ctx.dataset.label || ''}: ${formatCurrency(ctx.parsed.y, currency)}` } } },
+            scales: { y: { beginAtZero: true, ticks: { callback: (val) => formatCurrency(val, currency).replace(/\.00$/, '') }, title: { display: true, text: `Amount (${currency})` } }, x: { title: { display: true, text: 'Month' } } }
+        });
+        
+        const populateTablesAndSummary = (currency) => {
+            const rate = currency === 'USD' ? idrToUsdRate : 1;
+            const expenseTableBody = document.getElementById('expenseTableBody');
+            const incomeTableBody = document.getElementById('incomeTableBody');
+            const balanceTableBody = document.getElementById('balanceTableBody');
+            const cafeTableBody = document.getElementById('cafeTableBody');
+            expenseTableBody.innerHTML = ''; incomeTableBody.innerHTML = ''; balanceTableBody.innerHTML = ''; cafeTableBody.innerHTML = '';
+
+            let balance2024 = 0;
+            let balance2025 = 0;
+
+            labels.forEach((label, i) => {
+                const monthlyExpenses = Object.values(expenseCategories).reduce((sum, cat) => sum + cat[i], 0);
+                const balance = incomeData[i] - monthlyExpenses;
+
+                if (label.startsWith("2024")) {
+                    balance2024 += balance;
+                } else {
+                    balance2025 += balance;
+                }
+
+                let expenseHtml = `<td class="px-6 py-4 text-sm font-medium text-gray-900">${label}</td>`;
+                Object.keys(expenseCategories).forEach(cat => expenseHtml += `<td class="px-6 py-4 text-sm text-gray-500">${formatCurrency(expenseCategories[cat][i] * rate, currency)}</td>`);
+                expenseTableBody.innerHTML += `<tr>${expenseHtml}</tr>`;
+                
+                incomeTableBody.innerHTML += `<tr><td class="px-6 py-4 text-sm font-medium text-gray-900">${label}</td><td class="px-6 py-4 text-sm text-gray-500">${formatCurrency(incomeData[i] * rate, currency)}</td></tr>`;
+            });
+            
+            // Populate new yearly balance table
+            const balanceData = { '2024': balance2024, '2025': balance2025 };
+            for (const year in balanceData) {
+                const balanceValue = balanceData[year] * rate;
+                const balanceRow = `<tr class="${balanceValue >= 0 ? 'bg-green-50' : 'bg-red-50'}"><td class="px-6 py-4 text-sm font-medium text-gray-900">${year}</td><td class="px-6 py-4 text-sm font-semibold ${balanceValue >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(balanceValue, currency)}</td></tr>`;
+                balanceTableBody.innerHTML += balanceRow;
+            }
+
+             // Populate Cafe table
+            cafeData.labels.forEach((label, i) => {
+                const cafeBalance = cafeData.income[i] - cafeData.expense[i];
+                const cafeIncomeValue = cafeData.income[i] * rate;
+                const cafeExpenseValue = cafeData.expense[i] * rate;
+                const cafeBalanceValue = cafeBalance * rate;
+                const cafeRow = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${label}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${formatCurrency(cafeIncomeValue, currency)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${formatCurrency(cafeExpenseValue, currency)}</td>
+                        <td class="px-6 py-4 text-sm font-semibold ${cafeBalanceValue >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(cafeBalanceValue, currency)}</td>
+                    </tr>
+                `;
+                cafeTableBody.innerHTML += cafeRow;
+            });
+
+
+            const totalIncome = incomeData.reduce((a, b) => a + b, 0);
+            const totalExpenses = Object.values(expenseCategories).flat().reduce((a, b) => a + b, 0);
+            document.getElementById('totalIncomeValue').textContent = formatCurrency(totalIncome * rate, currency);
+            document.getElementById('totalExpensesValue').textContent = formatCurrency(totalExpenses * rate, currency);
+            document.getElementById('totalBalanceValue').textContent = formatCurrency((totalIncome - totalExpenses) * rate, currency);
+        };
+
+        const initializeDashboard = () => {
+            let commonOptionsLine = getCommonChartOptions('IDR');
+            const ctxIncome = document.getElementById('incomeChart').getContext('2d');
+            incomeChart = new Chart(ctxIncome, { type: 'line', data: { labels: labels, datasets: getChartDatasets(incomeData, 'IDR', 'income') }, options: commonOptionsLine });
+            
+            const ctxExpense = document.getElementById('expenseChart').getContext('2d');
+            expenseChart = new Chart(ctxExpense, { type: 'line', data: { labels: labels, datasets: getChartDatasets(expenseCategories, 'IDR', 'expense') }, options: commonOptionsLine });
+
+            let commonOptionsBar = getCommonChartOptions('IDR');
+            const ctxCafe = document.getElementById('cafeChart').getContext('2d');
+            cafeChart = new Chart(ctxCafe, { type: 'bar', data: { labels: cafeData.labels, datasets: getChartDatasets(cafeData, 'IDR', 'cafe') }, options: commonOptionsBar });
+
+            populateTablesAndSummary('IDR');
+        };
+
+        const updateView = (newCurrency) => {
+            if (currentCurrency === newCurrency) return;
+            currentCurrency = newCurrency;
+            
+            let commonOptionsLine = getCommonChartOptions(newCurrency);
+            incomeChart.data.datasets = getChartDatasets(incomeData, newCurrency, 'income');
+            incomeChart.options = commonOptionsLine;
+            incomeChart.update();
+
+            expenseChart.data.datasets = getChartDatasets(expenseCategories, newCurrency, 'expense');
+            expenseChart.options = commonOptionsLine;
+            expenseChart.update();
+            
+            let commonOptionsBar = getCommonChartOptions(newCurrency);
+            cafeChart.data.datasets = getChartDatasets(cafeData, newCurrency, 'cafe');
+            cafeChart.options = commonOptionsBar;
+            cafeChart.update();
+            
+            populateTablesAndSummary(newCurrency);
+            
+            document.getElementById('btn-idr').classList.toggle('btn-active', newCurrency === 'IDR');
+            document.getElementById('btn-usd').classList.toggle('btn-active', newCurrency === 'USD');
+        };
+        
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+        document.getElementById('btn-idr').addEventListener('click', () => updateView('IDR'));
+        document.getElementById('btn-usd').addEventListener('click', () => updateView('USD'));
+
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const reportContainer = document.getElementById('reportContainer');
+        const reportContent = document.getElementById('reportContent');
+        const aiLoader = document.getElementById('aiLoader');
+        const markdownConverter = new showdown.Converter();
+
+        generateReportBtn.addEventListener('click', async () => {
+            reportContainer.style.display = 'block';
+            reportContent.innerHTML = '';
+            aiLoader.style.display = 'block';
+
+            const totalIncome = incomeData.reduce((a,b) => a+b, 0);
+            const totalExpenses = Object.values(expenseCategories).flat().reduce((a,b) => a+b, 0);
+            let monthlyData = labels.map((label, i) => ({ month: label, income: incomeData[i], total_expenses: Object.values(expenseCategories).reduce((s,c) => s+c[i],0), net_income: incomeData[i] - Object.values(expenseCategories).reduce((s,c) => s+c[i],0) }));
+            let cafeMonthlyData = cafeData.labels.map((label, i) => ({ month: label, income: cafeData.income[i], expense: cafeData.expense[i], balance: cafeData.income[i] - cafeData.expense[i] }));
+            
+            const prompt = `You are a financial analyst providing a summary for 'Kasia'. Data is in IDR.
+                **Hotel Business Summary:**
+                - Total Income: ${formatCurrency(totalIncome, 'IDR')}
+                - Total Expenses: ${formatCurrency(totalExpenses, 'IDR')}
+                - Total Balance: ${formatCurrency(totalIncome - totalExpenses, 'IDR')}
+                - Hotel Monthly Data: ${JSON.stringify(monthlyData, null, 2)}
+                
+                **Cafe & Co-working 2025 Summary:**
+                - Cafe Monthly Data: ${JSON.stringify(cafeMonthlyData, null, 2)}
+
+                Provide a concise report covering: 1. Overall Performance (Hotel). 2. Key Trends (Hotel). 3. Expense Analysis (Hotel). 4. Cafe & Co-working Performance. 5. Investor Outlook. Format using Markdown.`;
+            
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0) {
+                    reportContent.innerHTML = markdownConverter.makeHtml(result.candidates[0].content.parts[0].text);
+                } else { throw new Error("Empty response from AI."); }
+            } catch (error) {
+                reportContent.innerHTML = `<p class="text-red-500">An error occurred while generating the report. ${error.message}</p>`;
+            } finally {
+                aiLoader.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
